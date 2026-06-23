@@ -44,6 +44,8 @@ if (
 
 const agent = new SocksProxyAgent(proxy);
 
+const start = Date.now();
+
 const ipRes = await axios.get(
   "https://api.ipify.org?format=json",
   {
@@ -53,68 +55,61 @@ const ipRes = await axios.get(
   }
 );
 
+const responseTime =
+  Date.now() - start;
+
 const ip = ipRes.data.ip;
 
 const geoRes = await axios.get(
   `http://ip-api.com/json/${ip}`
 );
 
-const isp = geoRes.data.isp || "Unknown";
+const isp =
+  geoRes.data.isp || "Unknown";
 
 let usageType = "Unknown";
 
-if (/mobile|telecom|wireless|cell/i.test(isp)) {
+if (
+  /mobile|telecom|wireless|cell/i.test(
+    isp
+  )
+) {
   usageType = "Mobile ISP";
-}
-
-let fraudScore = 0;
-
-// Estimated score only
-fraudScore += 20; // proxy detected
-
-if (usageType === "Mobile ISP") {
-  fraudScore += 10;
-} else {
-  fraudScore += 20;
-}
-
-if (/vpn|hosting|cloud|server|digitalocean|amazon|google/i.test(isp)) {
-  fraudScore += 30;
-}
-
-fraudScore = Math.min(fraudScore, 100);
-
-let riskLevel = "Low 🟢";
-
-if (fraudScore >= 51) {
-  riskLevel = "High 🔴";
-} else if (fraudScore >= 21) {
-  riskLevel = "Medium 🟡";
 }
 
 res.json({
   success: true,
   ip,
-  type: ip.includes(":") ? "IPv6" : "IPv4",
-  country: geoRes.data.country,
-  city: geoRes.data.city,
+  type:
+    ip.includes(":")
+      ? "IPv6"
+      : "IPv4",
+  country:
+    geoRes.data.country ||
+    "Unknown",
+  city:
+    geoRes.data.city ||
+    "Unknown",
   isp,
   usageType,
-  isProxy: true,
-  fraudScore,
-  riskLevel
+  responseTime
 });
 
 } catch (err) {
 res.json({
 success: false,
-error: err.message
+error:
+err.message ||
+"Proxy check failed."
 });
 }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT =
+process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-console.log("Server running on ${PORT}");
+console.log(
+"Server running on port ${PORT}"
+);
 });
