@@ -13,33 +13,54 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-// Proxy checker API
+// Proxy Checker API
 app.post("/check", async (req, res) => {
   try {
-    const proxy = req.body.proxy;
+    let proxy = (req.body.proxy || "").trim();
 
     if (!proxy) {
       return res.json({
         success: false,
-        error: "Proxy is required"
+        error: "Please enter a proxy."
       });
+    }
+
+    // Convert:
+    // socks5://host:port:username:password
+    // into:
+    // socks5://username:password@host:port
+    if (
+      proxy.startsWith("socks5://") &&
+      proxy.replace("socks5://", "").split(":").length >= 4
+    ) {
+      const p = proxy.replace("socks5://", "").split(":");
+
+      const host = p[0];
+      const port = p[1];
+      const password = p[p.length - 1];
+      const username = p.slice(2, -1).join(":");
+
+      proxy =
+        `socks5://${encodeURIComponent(username)}` +
+        `:${encodeURIComponent(password)}` +
+        `@${host}:${port}`;
     }
 
     const agent = new SocksProxyAgent(proxy);
 
-    // Proxy ke through public IP nikalo
+    // Get public IP through proxy
     const ipRes = await axios.get(
       "https://api.ipify.org?format=json",
       {
         httpAgent: agent,
         httpsAgent: agent,
-        timeout: 10000
+        timeout: 15000
       }
     );
 
     const ip = ipRes.data.ip;
 
-    // Country aur IP details
+    // Get country and ISP
     const geoRes = await axios.get(
       `http://ip-api.com/json/${ip}`
     );
@@ -61,7 +82,6 @@ app.post("/check", async (req, res) => {
   }
 });
 
-// Local testing ke liye
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
