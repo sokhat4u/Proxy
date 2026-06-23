@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>SOCKS5 Proxy Checker</title>
+
+<style>
+body{
+    font-family:Arial;
+    padding:30px;
+}
+
+input{
+    width:100%;
+    padding:12px;
+}
+
+button{
+    margin-top:15px;
+    padding:12px;
+}
+
+#result{
+    margin-top:20px;
+    white-space:pre-wrap;
+}
+</style>
+</head>
+
+<body>
+
+<h2>SOCKS5 Proxy Checker</h2>
+
+<input
+id="proxy"
+placeholder="socks5://host:port:username:password">
+
+<button onclick="checkProxy()">
+Check Proxy
+</button>
+
+<div id="result"></div>
+
+<script>
+async function checkProxy(){
+
+const proxy =
+document.getElementById("proxy").value;
+
+document.getElementById("result")
+.innerText = "Checking...";
+
+const response = await fetch("/check",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+proxy
+})
+});
+
+const data = await response.json();
+
+if(data.success){
+document.getElementById("result")
+.innerText =
+`✅ SUCCESS
+
+IP: ${data.ip}
+Type: ${data.type}
+Country: ${data.country}`;
+}
+else{
+document.getElementById("result")
+.innerText =
+`❌ FAILED
+
+Reason:
+${data.error}`;
+}
+}
+</script>
+
+</body>
+</html>
