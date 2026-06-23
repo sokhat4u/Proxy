@@ -1,86 +1,110 @@
-<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
 <meta charset="UTF-8">
-<title>SOCKS5 Proxy Checker</title>
-
-<style>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>SOCKS5 Proxy Checker</title><style>
 body{
-    font-family:Arial;
-    padding:30px;
+  font-family:Arial,sans-serif;
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+h1{
+  font-size:30px;
 }
 
 input{
-    width:100%;
-    padding:12px;
+  width:100%;
+  padding:15px;
+  font-size:16px;
+  box-sizing:border-box;
 }
 
 button{
-    margin-top:15px;
-    padding:12px;
+  padding:15px 25px;
+  margin-top:15px;
+  font-size:16px;
+  cursor:pointer;
 }
 
 #result{
-    margin-top:20px;
-    white-space:pre-wrap;
+  margin-top:25px;
+  font-size:22px;
+  white-space:pre-wrap;
 }
-</style>
-</head>
-
-<body>
-
-<h2>SOCKS5 Proxy Checker</h2>
-
-<input
+</style></head><body><h1>SOCKS5 Proxy Checker</h1><input
 id="proxy"
 placeholder="socks5://host:port:username:password">
 
 <button onclick="checkProxy()">
 Check Proxy
-</button>
-
-<div id="result"></div>
-
-<script>
+</button><div id="result"></div><script>
 async function checkProxy(){
 
-const proxy =
-document.getElementById("proxy").value;
+  const proxy =
+    document.getElementById("proxy").value.trim();
 
-document.getElementById("result")
-.innerText = "Checking...";
+  if(!proxy){
+    return;
+  }
 
-const response = await fetch("/check",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-proxy
-})
-});
+  document.getElementById("result")
+    .innerText = "Checking proxy...";
 
-const data = await response.json();
+  try{
 
-if(data.success){
-document.getElementById("result")
-.innerText =
+    const response = await fetch("/check",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        proxy
+      })
+    });
+
+    const data = await response.json();
+
+    if(data.success){
+
+      document.getElementById("result")
+        .innerText =
 `✅ SUCCESS
 
-IP: ${data.ip}
-Type: ${data.type}
-Country: ${data.country}`;
-}
-else{
-document.getElementById("result")
-.innerText =
+🌐 IP: ${data.ip}
+🌍 Country: ${data.country}
+🏙️ City: ${data.city}
+📡 ISP: ${data.isp}
+📱 Usage Type: ${data.usageType}
+🔒 Is Proxy: Yes
+🌎 Type: ${data.type}
+
+⚠️ Fraud Score:
+${data.fraudScore}/100
+
+🚨 Risk Level:
+${data.riskLevel}`;
+
+    }else{
+
+      document.getElementById("result")
+        .innerText =
 `❌ FAILED
 
 Reason:
 ${data.error}`;
-}
-}
-</script>
 
-</body>
+    }
+
+  }catch(e){
+
+    document.getElementById("result")
+      .innerText =
+`❌ FAILED
+
+Reason:
+${e.message}`;
+  }
+}
+</script></body>
 </html>
